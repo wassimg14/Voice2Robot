@@ -33,20 +33,6 @@ The magic happens when you say these things with different emotions. Try being e
 - **Robot Simulation**: A simple 2D robot that moves around based on your commands
 - **No Installation**: Everything runs in your web browser - no downloads, no setup
 
-## Getting Started
-
-It's super easy:
-
-```bash
-# Install the dependencies
-npm install
-
-# Start the server
-npm run server
-```
-
-Then open your browser to the local address shown in the terminal. Click "Hold to Record," give the robot a command, and watch it respond to both your words and your mood!
-
 ## Why This Matters
 
 This isn't just a fun demo (though it definitely is that). It's exploring how we can make human-computer interaction more natural and emotionally aware. Imagine if all our devices could pick up on not just what we're asking for, but how we're feeling when we ask for it.
@@ -61,3 +47,7 @@ The robot might move cautiously when you sound tired, energetically when you're 
 - Built with vanilla JavaScript and modern web APIs for maximum compatibility
 
 Give it a try and see how it feels to have a robot that actually listens to more than just your words!
+
+
+Built by Wassim Gueraoui
+wassimgueraoui@gmail.com
