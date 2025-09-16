@@ -1,0 +1,814 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🎮 Voice → Robot (Command + Emotion)</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #2196F3 0%, #21CBF3 50%, #45B7D1 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .subtitle {
+            text-align: center;
+            margin-bottom: 30px;
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .controls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .record-btn {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            border: none;
+            border-radius: 50px;
+            padding: 15px 30px;
+            color: white;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .record-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .record-btn:active {
+            transform: translateY(0);
+        }
+        
+        .record-btn.recording {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .results {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .result-card {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 15px;
+            padding: 20px;
+            backdrop-filter: blur(5px);
+        }
+        
+        .result-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.1em;
+            opacity: 0.8;
+        }
+        
+        .result-value {
+            font-size: 1.3em;
+            font-weight: bold;
+            word-break: break-word;
+        }
+        
+        .simulation {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            color: #333;
+        }
+        
+        .simulation h3 {
+            margin: 0 0 15px 0;
+            color: #333;
+        }
+        
+        .robot-frame {
+            width: 100%;
+            height: 400px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            background: white;
+            overflow: hidden;
+        }
+        
+        .robot-happy {
+            filter: hue-rotate(60deg) brightness(1.2);
+        }
+        
+        .robot-angry {
+            filter: hue-rotate(0deg) brightness(1.3) saturate(1.5);
+        }
+        
+        .robot-sad {
+            filter: hue-rotate(240deg) brightness(0.7) saturate(0.8);
+        }
+        
+        .robot-neutral {
+            filter: none;
+        }
+        
+        .status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+        
+        .status.success {
+            background: rgba(46, 204, 113, 0.2);
+            color: #27ae60;
+        }
+        
+        .status.error {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+        }
+        
+        .status.processing {
+            background: rgba(52, 152, 219, 0.2);
+            color: #3498db;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 15px;
+                margin: 0;
+                border-radius: 15px;
+            }
+            
+            .results {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .controls {
+                position: sticky;
+                top: 10px;
+                z-index: 100;
+                background: rgba(255, 255, 255, 0.15);
+                backdrop-filter: blur(10px);
+                border-radius: 15px;
+                padding: 15px;
+                margin-bottom: 20px;
+            }
+            
+            .record-btn {
+                font-size: 1em;
+                padding: 12px 25px;
+            }
+            
+            .results {
+                grid-template-columns: 1fr 1fr;
+                gap: 10px;
+                margin-bottom: 20px;
+            }
+            
+            .result-card {
+                padding: 15px;
+            }
+            
+            .result-card h3 {
+                font-size: 0.9em;
+                margin-bottom: 8px;
+            }
+            
+            .result-value {
+                font-size: 1.1em;
+            }
+            
+            .simulation {
+                padding: 15px;
+                margin: 0;
+                width: 100%;
+                box-sizing: border-box;
+            }
+            
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            opacity: 0.8;
+        }
+        
+        .footer-text {
+            font-size: 1.1em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .footer-email {
+            font-size: 0.9em;
+            opacity: 0.7;
+        }
+        
+        @media (max-width: 768px) {
+            .footer {
+                margin-top: 20px;
+                padding-top: 15px;
+            }
+            
+            .footer-text {
+                font-size: 1em;
+            }
+            
+            .footer-email {
+                font-size: 0.85em;
+            }
+        }
+            .robot-frame {
+                height: 250px;
+                width: 100%;
+                box-sizing: border-box;
+                overflow: hidden;
+            }
+            
+            .subtitle {
+                font-size: 1em;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Voice → Robot (Command + Emotion)</h1>
+        <p class="subtitle">Hold the mic ~3–5s. Try: 'walk forward', 'turn left', 'stop'. Speak happy/angry/sad.</p>
+        
+        <div class="controls">
+            <button id="recordBtn" class="record-btn">🎤 Hold to Record</button>
+        </div>
+        
+        <div class="results">
+            <div class="result-card">
+                <h3>ASR Transcript</h3>
+                <div id="transcript" class="result-value">Ready to listen...</div>
+            </div>
+            
+            <div class="result-card">
+                <h3>Detected Emotion</h3>
+                <div id="emotion" class="result-value">neutral</div>
+            </div>
+            
+            <div class="result-card">
+                <h3>Detected Intent</h3>
+                <div id="intent" class="result-value">idle</div>
+            </div>
+            
+            <div class="result-card">
+                <h3>Robot Status</h3>
+                <div id="robotStatus" class="result-value">Waiting for command...</div>
+            </div>
+        </div>
+        
+        <div class="simulation">
+            <h3>Simulation Preview</h3>
+            <div id="robotFrame" class="robot-frame">
+                <svg width="100%" height="100%" viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="800" height="400" fill="white"/>
+                    <g transform="translate(400, 200)">
+                        <circle cx="0" cy="0" r="20" fill="#4a90e2" stroke="#2c5aa0" stroke-width="2"/>
+                        <polygon points="15,0 25,5 25,-5" fill="#2c5aa0"/>
+                        <circle cx="-8" cy="-8" r="3" fill="white"/>
+                        <circle cx="8" cy="-8" r="3" fill="white"/>
+                        <circle cx="-8" cy="-8" r="1" fill="black"/>
+                        <circle cx="8" cy="-8" r="1" fill="black"/>
+                    </g>
+                    <text x="10" y="20" font-family="Arial" font-size="12" fill="#333">
+                        Position: (0.0, 0.0)
+                    </text>
+                    <text x="10" y="35" font-family="Arial" font-size="12" fill="#333">
+                        Rotation: 0.0°
+                    </text>
+                </svg>
+            </div>
+            <div id="status" class="status">Ready to receive commands</div>
+        </div>
+        
+        <div class="footer">
+            <div class="footer-text">Made by Wassim Gueraoui</div>
+            <div class="footer-email"><a href="mailto:wassimgueraoui@gmail.com" style="color: inherit; text-decoration: none;">wassimgueraoui@gmail.com</a></div>
+        </div>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+        let recognition;
+        let currentEmotion = 'neutral';
+        let audioContext;
+        let analyser;
+        let dataArray;
+        let source;
+        let emotionMonitorInterval = null;
+        
+        const recordBtn = document.getElementById('recordBtn');
+        const transcript = document.getElementById('transcript');
+        const emotion = document.getElementById('emotion');
+        const intent = document.getElementById('intent');
+        const robotStatus = document.getElementById('robotStatus');
+        const robotFrame = document.getElementById('robotFrame');
+        const status = document.getElementById('status');
+        
+        // Initialize speech recognition
+        function initSpeechRecognition() {
+            if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'en-US';
+                
+                recognition.onresult = function(event) {
+                    const speechResult = event.results[0][0].transcript;
+                    transcript.textContent = speechResult;
+                    processCommand(speechResult);
+                };
+                
+                recognition.onerror = function(event) {
+                    console.error('Speech recognition error:', event.error);
+                    updateStatus('Speech recognition error: ' + event.error, 'error');
+                };
+                
+                recognition.onend = function() {
+                    isRecording = false;
+                    recordBtn.classList.remove('recording');
+                    recordBtn.textContent = '🎤 Hold to Record';
+                };
+            } else {
+                updateStatus('Speech recognition not supported in this browser', 'error');
+            }
+        }
+        
+        // Initialize audio recording
+        async function initAudio() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    audio: {
+                        echoCancellation: false,
+                        noiseSuppression: false,
+                        autoGainControl: false
+                    }
+                });
+                
+                console.log('Microphone access granted');
+                mediaRecorder = new MediaRecorder(stream);
+                
+                // Set up audio analysis
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                source = audioContext.createMediaStreamSource(stream);
+                source.connect(analyser);
+                
+                analyser.fftSize = 1024;
+                analyser.smoothingTimeConstant = 0.3;
+                const bufferLength = analyser.frequencyBinCount;
+                dataArray = new Uint8Array(bufferLength);
+                
+                console.log('Audio analysis setup complete');
+                
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
+                
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+                    audioChunks = [];
+                    await processAudio(audioBlob);
+                };
+                
+            } catch (error) {
+                console.error('Error accessing microphone:', error);
+                updateStatus('Error: Could not access microphone', 'error');
+            }
+        }
+        
+        // Analyze emotion from real-time audio data
+        function analyzeEmotionFromAudio() {
+            if (!analyser || !dataArray) {
+                return 'neutral';
+            }
+            
+            // Get frequency data
+            analyser.getByteFrequencyData(dataArray);
+            
+            // Calculate audio features
+            let sum = 0;
+            let maxValue = 0;
+            
+            for (let i = 0; i < dataArray.length; i++) {
+                sum += dataArray[i];
+                if (dataArray[i] > maxValue) {
+                    maxValue = dataArray[i];
+                }
+            }
+            
+            const avgVolume = sum / dataArray.length;
+            
+            // Calculate frequency band energies
+            const lowEnd = Math.floor(dataArray.length * 0.2);
+            const midEnd = Math.floor(dataArray.length * 0.8);
+            
+            let lowEnergy = 0;
+            let midEnergy = 0;
+            let highEnergy = 0;
+            
+            for (let i = 0; i < lowEnd; i++) {
+                lowEnergy += dataArray[i];
+            }
+            for (let i = lowEnd; i < midEnd; i++) {
+                midEnergy += dataArray[i];
+            }
+            for (let i = midEnd; i < dataArray.length; i++) {
+                highEnergy += dataArray[i];
+            }
+            
+            // Normalize energies
+            lowEnergy /= lowEnd;
+            midEnergy /= (midEnd - lowEnd);
+            highEnergy /= (dataArray.length - midEnd);
+            
+            console.log(`Audio Analysis - Avg: ${avgVolume.toFixed(1)}, Max: ${maxValue}, Low: ${lowEnergy.toFixed(1)}, Mid: ${midEnergy.toFixed(1)}, High: ${highEnergy.toFixed(1)}`);
+            
+            // Emotion detection logic
+            if (maxValue > 100 && avgVolume > 30 && (highEnergy > midEnergy || avgVolume > 50)) {
+                return maxValue > 150 ? 'angry' : 'happy';
+            } else if (avgVolume < 10 && maxValue < 30) {
+                return 'sad';
+            }
+            
+            return 'neutral';
+        }
+        
+        // Start monitoring emotion from audio
+        function startEmotionMonitoring() {
+            if (emotionMonitorInterval) {
+                clearInterval(emotionMonitorInterval);
+            }
+            
+            emotionMonitorInterval = setInterval(() => {
+                if (analyser && dataArray) {
+                    const detectedEmotion = analyzeEmotionFromAudio();
+                    if (detectedEmotion !== currentEmotion) {
+                        console.log('Emotion changed from', currentEmotion, 'to', detectedEmotion);
+                        updateRobotEmotion(detectedEmotion);
+                        emotion.textContent = detectedEmotion;
+                    }
+                }
+            }, 200);
+        }
+        
+        function stopEmotionMonitoring() {
+            if (emotionMonitorInterval) {
+                clearInterval(emotionMonitorInterval);
+                emotionMonitorInterval = null;
+            }
+        }
+        
+        // Process voice command without server
+        function processCommand(speechText) {
+            // Combine audio-based and text-based emotion detection
+            const audioEmotion = currentEmotion;
+            const textEmotion = analyzeEmotionFromSpeech(speechText);
+            
+            // Prioritize audio emotion, but use text as backup
+            const detectedEmotion = audioEmotion !== 'neutral' ? audioEmotion : textEmotion;
+            
+            const detectedIntent = getIntent(speechText);
+            
+            // Update UI
+            emotion.textContent = detectedEmotion;
+            intent.textContent = detectedIntent;
+            robotStatus.textContent = `Moving: ${detectedIntent} (${detectedEmotion})`;
+            
+            // Update robot visualization
+            updateRobotEmotion(detectedEmotion);
+            executeRobotCommand(detectedIntent, detectedEmotion);
+            
+            updateStatus('Command executed successfully!', 'success');
+        }
+        
+        // Simple emotion analysis based on speech patterns
+        function analyzeEmotionFromSpeech(text) {
+            const lowerText = text.toLowerCase();
+            
+            // Happy indicators
+            if (/\b(great|awesome|fantastic|wonderful|amazing|excellent|good|nice|love|happy|excited|yay|hooray|brilliant|perfect|super|cool|fun|joy|smile|laugh)\b/.test(lowerText) || 
+                text.includes('!') || text.includes('yeah') || text.includes('yes') || text.includes('wow')) {
+                return 'happy';
+            }
+            
+            // Angry indicators
+            if (/\b(stop|damn|angry|mad|frustrated|annoying|stupid|hate|terrible|awful|furious|rage|pissed|irritated)\b/.test(lowerText) ||
+                text.includes('!!') || /[A-Z]{4,}/.test(text)) {
+                return 'angry';
+            }
+            
+            // Sad indicators
+            if (/\b(sad|tired|slow|quiet|sorry|please|help|down|low|depressed|lonely|cry|weep|sigh|disappointed|hurt|pain)\b/.test(lowerText)) {
+                return 'sad';
+            }
+            
+            return 'neutral';
+        }
+        
+        // Intent recognition
+        function getIntent(text) {
+            const lowerText = text.toLowerCase();
+            
+            if (/\b(stop|halt|freeze|wait|pause)\b/.test(lowerText)) return 'stop';
+            if (/\b(left|turn left)\b/.test(lowerText)) return 'turn_left';
+            if (/\b(right|turn right)\b/.test(lowerText)) return 'turn_right';
+            if (/\b(back|reverse|backward|go back)\b/.test(lowerText)) return 'back';
+            if (/\b(forward|walk|go|ahead|move|start)\b/.test(lowerText)) return 'walk';
+            
+            return 'idle';
+        }
+        
+        // Update robot visual emotion
+        function updateRobotEmotion(emotionType) {
+            currentEmotion = emotionType;
+            console.log('Updating robot emotion to:', emotionType);
+            
+            // Force immediate visual update
+            updateRobotVisualization();
+        }
+        
+        // Simple robot position tracking
+        let robotPosition = { x: 0, y: 0, rotation: 0 };
+        
+        // Process recorded audio
+        async function processAudio(audioBlob) {
+            updateStatus('Processing audio...', 'processing');
+            
+            // Since we're using browser-based speech recognition and emotion detection,
+            // we don't need to process the audio blob on the server
+            updateStatus('Audio processing complete', 'success');
+        }
+        
+        // Execute robot command with emotion
+        function executeRobotCommand(intentType, emotionType) {
+            const emotionGain = {
+                happy: 1.2,
+                angry: 1.5,
+                sad: 0.5,
+                neutral: 1.0
+            };
+            
+            const gain = emotionGain[emotionType] || 1.0;
+            let movement = { linear: 0, angular: 0 };
+            
+            switch (intentType) {
+                case 'walk':
+                    movement.linear = 1.0 * gain;
+                    break;
+                case 'back':
+                    movement.linear = -0.8 * gain;
+                    break;
+                case 'turn_left':
+                    movement.angular = 1.2 * gain;
+                    break;
+                case 'turn_right':
+                    movement.angular = -1.2 * gain;
+                    break;
+                case 'stop':
+                case 'idle':
+                default:
+                    movement = { linear: 0, angular: 0 };
+                    break;
+            }
+            
+            // Calculate new position
+            const newX = robotPosition.x + movement.linear * Math.cos(robotPosition.rotation) * 0.1;
+            const newY = robotPosition.y + movement.linear * Math.sin(robotPosition.rotation) * 0.1;
+            
+            // Define boundaries (accounting for robot size and some padding)
+            const minX = -3.5;  // Left boundary
+            const maxX = 3.5;   // Right boundary  
+            const minY = -1.8;  // Top boundary
+            const maxY = 1.8;   // Bottom boundary
+            
+            // Apply boundary constraints - clamp position within bounds
+            robotPosition.x = Math.max(minX, Math.min(maxX, newX));
+            robotPosition.y = Math.max(minY, Math.min(maxY, newY));
+            
+            // Always allow rotation (no boundary constraints on rotation)
+            robotPosition.rotation += movement.angular * 0.1;
+            
+            updateRobotVisualization();
+        }
+        
+        // Update status message
+        function updateStatus(message, type) {
+            status.textContent = message;
+            status.className = `status ${type}`;
+        }
+        
+        // Update robot visualization
+        function updateRobotVisualization() {
+            // Get existing SVG elements
+            const svg = robotFrame.querySelector('svg');
+            if (!svg) {
+                // Initialize SVG if it doesn't exist
+                initializeSVG();
+                return;
+            }
+            
+            const robotX = 400 + robotPosition.x * 100;
+            const robotY = 200 + robotPosition.y * 100;
+            const rotation = robotPosition.rotation * 180 / Math.PI;
+            
+            // Different colors based on emotion
+            const emotionColors = {
+                happy: { body: '#4CAF50', accent: '#2E7D32' },
+                angry: { body: '#F44336', accent: '#C62828' },
+                sad: { body: '#2196F3', accent: '#1565C0' },
+                neutral: { body: '#4a90e2', accent: '#2c5aa0' }
+            };
+            
+            const colors = emotionColors[currentEmotion] || emotionColors.neutral;
+            
+            // Update robot group transform
+            const robotGroup = svg.getElementById('robotGroup');
+            if (robotGroup) {
+                robotGroup.setAttribute('transform', `translate(${robotX}, ${robotY}) rotate(${rotation})`);
+            }
+            
+            // Update robot colors
+            const robotBody = svg.getElementById('robotBody');
+            const robotDirection = svg.getElementById('robotDirection');
+            if (robotBody) {
+                robotBody.setAttribute('fill', colors.body);
+                robotBody.setAttribute('stroke', colors.accent);
+            }
+            if (robotDirection) {
+                robotDirection.setAttribute('fill', colors.accent);
+            }
+            
+            // Update position text
+            const positionText = svg.getElementById('positionText');
+            const rotationText = svg.getElementById('rotationText');
+            if (positionText) {
+                positionText.textContent = `Position: (${robotPosition.x.toFixed(1)}, ${robotPosition.y.toFixed(1)})`;
+            }
+            if (rotationText) {
+                rotationText.textContent = `Rotation: ${(robotPosition.rotation * 180 / Math.PI).toFixed(1)}°`;
+            }
+        }
+        
+        // Initialize SVG structure once
+        function initializeSVG() {
+            robotFrame.innerHTML = `
+                <svg width="100%" height="100%" viewBox="0 0 800 400" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="800" height="400" fill="white"/>
+                    <g id="robotGroup" transform="translate(400, 200) rotate(0)">
+                        <!-- Robot body -->
+                        <circle id="robotBody" cx="0" cy="0" r="20" fill="#4a90e2" stroke="#2c5aa0" stroke-width="2"/>
+                        <!-- Robot direction indicator -->
+                        <polygon id="robotDirection" points="15,0 25,5 25,-5" fill="#2c5aa0"/>
+                        <!-- Robot eyes -->
+                        <circle cx="-8" cy="-8" r="3" fill="white"/>
+                        <circle cx="8" cy="-8" r="3" fill="white"/>
+                        <circle cx="-8" cy="-8" r="1" fill="black"/>
+                        <circle cx="8" cy="-8" r="1" fill="black"/>
+                    </g>
+                    <text id="positionText" x="10" y="20" font-family="Arial" font-size="12" fill="#333">
+                        Position: (0.0, 0.0)
+                    </text>
+                    <text id="rotationText" x="10" y="35" font-family="Arial" font-size="12" fill="#333">
+                        Rotation: 0.0°
+                    </text>
+                </svg>
+            `;
+        }
+        
+        // Record button event handlers
+        recordBtn.addEventListener('mousedown', startRecording);
+        recordBtn.addEventListener('mouseup', stopRecording);
+        recordBtn.addEventListener('mouseleave', stopRecording);
+        
+        // Touch events for mobile
+        recordBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            startRecording();
+        });
+        
+        recordBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            stopRecording();
+        });
+        
+        function startRecording() {
+            if (isRecording) return;
+            
+            console.log('Starting recording...');
+            
+            // Resume audio context if suspended
+            if (audioContext && audioContext.state === 'suspended') {
+                console.log('Resuming audio context');
+                audioContext.resume();
+            }
+            
+            isRecording = true;
+            recordBtn.classList.add('recording');
+            recordBtn.textContent = '🔴 Recording...';
+            updateStatus('Listening...', 'processing');
+            
+            startEmotionMonitoring();
+            
+            // Start speech recognition
+            if (recognition && recognition.state !== 'started') {
+                console.log('Starting speech recognition');
+                recognition.start();
+            }
+            
+            // Start audio recording for emotion analysis
+            if (mediaRecorder) {
+                mediaRecorder.start();
+            }
+        }
+        
+        function stopRecording() {
+            if (!isRecording) return;
+            
+            console.log('Stopping recording...');
+            
+            stopEmotionMonitoring();
+            
+            isRecording = false;
+            recordBtn.classList.remove('recording');
+            recordBtn.textContent = '🎤 Hold to Record';
+            
+            // Stop speech recognition
+            if (recognition) {
+                recognition.stop();
+            }
+            
+            // Stop audio recording
+            if (mediaRecorder) {
+                mediaRecorder.stop();
+            }
+        }
+        
+        // Initialize the app
+        initSpeechRecognition();
+        initAudio();
+        
+        // Initialize SVG when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeSVG();
+        });
+        
+        // If DOM is already loaded, initialize immediately
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeSVG);
+        } else {
+            initializeSVG();
+        }
+    </script>
+</body>
+</html>
